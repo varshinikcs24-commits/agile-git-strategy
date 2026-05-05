@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GitFlow — Agile Team Social Contract</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2236;
+    --border: #1e3a5f;
+    --accent: #00d4ff;
+    --accent2: #7c3aed;
+    --accent3: #10b981;
+    --warn: #f59e0b;
+    --danger: #ef4444;
+    --text: #e2e8f0;
+    --text-muted: #64748b;
+    --text-dim: #94a3b8;
+    --mono: 'Space Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── PAGE SYSTEM ─── */
+  .page { display: none; min-height: 100vh; }
+  .page.active { display: block; animation: fadeIn 0.4s ease; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+  @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+  @keyframes scanline { from { background-position: 0 0; } to { background-position: 0 100px; } }
+  @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  @keyframes draw { from { stroke-dashoffset: 1000; } to { stroke-dashoffset: 0; } }
+
+  /* ─── NAV ─── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 2rem;
+    background: rgba(10,14,26,0.9);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-logo {
+    font-family: var(--mono); font-size: 1.1rem; font-weight: 700;
+    color: var(--accent); cursor: pointer; letter-spacing: -1px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .nav-logo::before {
+    content: ''; width: 8px; height: 8px; background: var(--accent);
+    border-radius: 50%; display: inline-block; animation: pulse 2s infinite;
+  }
+  .nav-links { display: flex; gap: 0.25rem; }
+  .nav-btn {
+    font-family: var(--mono); font-size: 0.72rem; padding: 0.4rem 0.9rem;
+    background: transparent; border: 1px solid var(--border);
+    color: var(--text-dim); cursor: pointer; border-radius: 4px;
+    transition: all 0.2s; letter-spacing: 0.5px;
+  }
+  .nav-btn:hover, .nav-btn.active {
+    border-color: var(--accent); color: var(--accent);
+    background: rgba(0,212,255,0.07);
+  }
+  .nav-user {
+    display: flex; align-items: center; gap: 10px;
+    font-family: var(--mono); font-size: 0.75rem; color: var(--text-muted);
+  }
+  .avatar {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.7rem; font-weight: 700; color: #fff;
+  }
+  .logout-btn {
+    font-family: var(--mono); font-size: 0.7rem; padding: 0.3rem 0.7rem;
+    background: transparent; border: 1px solid var(--danger);
+    color: var(--danger); cursor: pointer; border-radius: 4px; transition: all 0.2s;
+  }
+  .logout-btn:hover { background: var(--danger); color: #fff; }
+
+  /* ─── LOGIN PAGE ─── */
+  #loginPage {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh;
+    background: radial-gradient(ellipse at 30% 50%, rgba(124,58,237,0.15) 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 20%, rgba(0,212,255,0.1) 0%, transparent 50%),
+                var(--bg);
+  }
+  .login-grid {
+    position: absolute; inset: 0; overflow: hidden; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  .login-container {
+    position: relative; width: 440px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 2.5rem;
+    box-shadow: 0 0 60px rgba(0,212,255,0.08), 0 0 120px rgba(124,58,237,0.05);
+  }
+  .login-header { margin-bottom: 2rem; text-align: center; }
+  .login-logo {
+    font-family: var(--mono); font-size: 2rem; font-weight: 700;
+    color: var(--accent); letter-spacing: -2px; margin-bottom: 0.5rem;
+  }
+  .login-logo span { color: var(--accent2); }
+  .login-subtitle { font-size: 0.8rem; color: var(--text-muted); font-family: var(--mono); }
+  .login-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(16,185,129,0.1); border: 1px solid var(--accent3);
+    color: var(--accent3); font-family: var(--mono); font-size: 0.68rem;
+    padding: 0.25rem 0.6rem; border-radius: 20px; margin-bottom: 1.5rem;
+  }
+  .login-badge::before { content: '●'; animation: pulse 2s infinite; }
+
+  .form-group { margin-bottom: 1.2rem; }
+  .form-label {
+    display: block; font-family: var(--mono); font-size: 0.72rem;
+    color: var(--text-muted); margin-bottom: 0.4rem; letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .form-input {
+    width: 100%; padding: 0.75rem 1rem;
+    background: var(--bg); border: 1px solid var(--border);
+    color: var(--text); font-family: var(--mono); font-size: 0.85rem;
+    border-radius: 6px; outline: none; transition: all 0.2s;
+  }
+  .form-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,212,255,0.1); }
+  .form-input::placeholder { color: var(--text-muted); }
+
+  .login-hint {
+    font-family: var(--mono); font-size: 0.68rem; color: var(--text-muted);
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 6px; padding: 0.6rem 0.8rem; margin-bottom: 1.2rem;
+  }
+  .login-hint span { color: var(--accent); }
+
+  .btn-primary {
+    width: 100%; padding: 0.85rem;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none; color: #fff;
+    font-family: var(--mono); font-size: 0.85rem; font-weight: 700;
+    border-radius: 6px; cursor: pointer; letter-spacing: 1px;
+    transition: all 0.3s; position: relative; overflow: hidden;
+  }
+  .btn-primary::after {
+    content: ''; position: absolute; inset: 0;
+    background: rgba(255,255,255,0.1); opacity: 0; transition: opacity 0.2s;
+  }
+  .btn-primary:hover::after { opacity: 1; }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 25px rgba(0,212,255,0.3); }
+  .btn-primary:active { transform: translateY(0); }
+
+  .error-msg {
+    display: none; font-family: var(--mono); font-size: 0.75rem;
+    color: var(--danger); background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.3); border-radius: 6px;
+    padding: 0.6rem 0.8rem; margin-bottom: 1rem;
+  }
+  .error-msg.show { display: block; animation: fadeIn 0.3s ease; }
+
+  /* ─── LAYOUT ─── */
+  .main-layout { padding-top: 60px; display: flex; min-height: 100vh; }
+
+  .sidebar {
+    width: 220px; background: var(--surface); border-right: 1px solid var(--border);
+    padding: 1.5rem 1rem; position: fixed; top: 60px; left: 0;
+    height: calc(100vh - 60px); overflow-y: auto; z-index: 100;
+  }
+  .sidebar-section { margin-bottom: 1.5rem; }
+  .sidebar-label {
+    font-family: var(--mono); font-size: 0.62rem; letter-spacing: 2px;
+    color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem;
+    padding: 0 0.5rem;
+  }
+  .sidebar-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 0.55rem 0.75rem; border-radius: 6px; cursor: pointer;
+    font-size: 0.82rem; color: var(--text-dim); transition: all 0.2s;
+    margin-bottom: 2px;
+  }
+  .sidebar-item:hover { background: var(--surface2); color: var(--text); }
+  .sidebar-item.active { background: rgba(0,212,255,0.1); color: var(--accent); border-left: 2px solid var(--accent); }
+  .sidebar-icon { font-size: 1rem; width: 20px; text-align: center; }
+
+  .main-content { margin-left: 220px; flex: 1; padding: 2rem; }
+
+  /* ─── CARDS ─── */
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 1.5rem; margin-bottom: 1.5rem;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: rgba(0,212,255,0.3); }
+  .card-title {
+    font-size: 1rem; font-weight: 700; margin-bottom: 1rem;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card-title .icon { font-size: 1.1rem; }
+
+  /* ─── GRID ─── */
+  .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.2rem; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2rem; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+
+  /* ─── STAT BOXES ─── */
+  .stat-box {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 1.2rem;
+    display: flex; flex-direction: column; gap: 0.5rem;
+    transition: all 0.2s;
+  }
+  .stat-box:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .stat-label { font-family: var(--mono); font-size: 0.68rem; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; }
+  .stat-val { font-size: 2rem; font-weight: 800; color: var(--accent); line-height: 1; }
+  .stat-sub { font-family: var(--mono); font-size: 0.72rem; color: var(--accent3); }
+
+  /* ─── PAGE HEADER ─── */
+  .page-header { margin-bottom: 2rem; }
+  .page-header h1 { font-size: 1.8rem; font-weight: 800; letter-spacing: -0.5px; }
+  .page-header p { color: var(--text-muted); font-size: 0.88rem; margin-top: 0.4rem; }
+  .breadcrumb {
+    font-family: var(--mono); font-size: 0.7rem; color: var(--text-muted);
+    margin-bottom: 0.5rem;
+  }
+  .breadcrumb span { color: var(--accent); }
+
+  /* ─── BRANCH DIAGRAM ─── */
+  .branch-visual {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 1.5rem; overflow-x: auto;
+  }
+  .branch-row { display: flex; align-items: center; gap: 0; margin-bottom: 0.8rem; position: relative; }
+  .branch-name {
+    font-family: var(--mono); font-size: 0.75rem; width: 110px;
+    color: var(--text-dim); flex-shrink: 0;
+  }
+  .branch-line { display: flex; align-items: center; gap: 4px; }
+  .commit {
+    width: 14px; height: 14px; border-radius: 50%;
+    border: 2px solid; flex-shrink: 0; position: relative;
+    cursor: pointer; transition: transform 0.2s;
+    animation: float 3s ease-in-out infinite;
+  }
+  .commit:hover { transform: scale(1.4); }
+  .commit.main { border-color: var(--accent); background: var(--accent); animation-delay: 0s; }
+  .commit.develop { border-color: var(--accent2); background: var(--accent2); animation-delay: 0.3s; }
+  .commit.feature { border-color: var(--accent3); background: transparent; animation-delay: 0.6s; }
+  .commit.release { border-color: var(--warn); background: transparent; animation-delay: 0.9s; }
+  .commit.hotfix { border-color: var(--danger); background: transparent; animation-delay: 0.2s; }
+  .commit.filled { background: currentColor; }
+  .branch-connector {
+    height: 2px; width: 20px; flex-shrink: 0;
+  }
+  .connector-main { background: var(--accent); }
+  .connector-dev { background: var(--accent2); }
+  .connector-feat { background: var(--accent3); }
+  .connector-rel { background: var(--warn); }
+  .connector-hot { background: var(--danger); }
+
+  /* ─── RULES TABLE ─── */
+  .rules-table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+  .rules-table th {
+    font-family: var(--mono); font-size: 0.68rem; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--text-muted);
+    padding: 0.75rem 1rem; text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .rules-table td { padding: 0.75rem 1rem; border-bottom: 1px solid rgba(30,58,95,0.5); }
+  .rules-table tr:hover td { background: var(--surface2); }
+  .tag {
+    display: inline-block; font-family: var(--mono); font-size: 0.65rem;
+    padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 700;
+  }
+  .tag-main { background: rgba(0,212,255,0.15); color: var(--accent); }
+  .tag-dev { background: rgba(124,58,237,0.15); color: var(--accent2); }
+  .tag-feat { background: rgba(16,185,129,0.15); color: var(--accent3); }
+  .tag-rel { background: rgba(245,158,11,0.15); color: var(--warn); }
+  .tag-hot { background: rgba(239,68,68,0.15); color: var(--danger); }
+  .tag-yes { background: rgba(16,185,129,0.15); color: var(--accent3); }
+  .tag-no { background: rgba(239,68,68,0.15); color: var(--danger); }
+
+  /* ─── CODE BLOCK ─── */
+  .code-block {
+    background: #050810; border: 1px solid var(--border);
+    border-radius: 8px; padding: 1.2rem; font-family: var(--mono);
+    font-size: 0.78rem; line-height: 1.8; overflow-x: auto;
+    position: relative;
+  }
+  .code-block .comment { color: #4a5568; }
+  .code-block .cmd { color: var(--accent); }
+  .code-block .arg { color: var(--accent3); }
+  .code-block .str { color: var(--warn); }
+  .code-block .kw { color: var(--accent2); }
+  .copy-btn {
+    position: absolute; top: 0.6rem; right: 0.6rem;
+    font-family: var(--mono); font-size: 0.65rem; padding: 0.2rem 0.6rem;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--text-muted); cursor: pointer; border-radius: 4px; transition: all 0.2s;
+  }
+  .copy-btn:hover { border-color: var(--accent3); color: var(--accent3); }
+
+  /* ─── TIMELINE ─── */
+  .timeline { position: relative; padding-left: 2rem; }
+  .timeline::before { content: ''; position: absolute; left: 8px; top: 0; bottom: 0; width: 2px; background: var(--border); }
+  .timeline-item { position: relative; margin-bottom: 1.5rem; }
+  .timeline-dot {
+    position: absolute; left: -2.2rem; top: 0.15rem;
+    width: 12px; height: 12px; border-radius: 50%;
+    border: 2px solid var(--accent); background: var(--bg);
+  }
+  .timeline-item.done .timeline-dot { background: var(--accent); }
+  .timeline-item.active .timeline-dot { background: var(--accent); box-shadow: 0 0 10px var(--accent); animation: pulse 2s infinite; }
+  .timeline-title { font-weight: 700; font-size: 0.9rem; margin-bottom: 0.2rem; }
+  .timeline-desc { font-size: 0.8rem; color: var(--text-muted); }
+  .timeline-time { font-family: var(--mono); font-size: 0.68rem; color: var(--accent); margin-top: 0.2rem; }
+
+  /* ─── TEAM MEMBER ─── */
+  .team-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 1.2rem; text-align: center;
+    transition: all 0.2s;
+  }
+  .team-card:hover { border-color: var(--accent2); transform: translateY(-3px); }
+  .team-avatar {
+    width: 52px; height: 52px; border-radius: 50%; margin: 0 auto 0.8rem;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; font-weight: 800;
+  }
+  .team-name { font-weight: 700; font-size: 0.9rem; margin-bottom: 0.2rem; }
+  .team-role { font-family: var(--mono); font-size: 0.68rem; color: var(--text-muted); }
+  .team-perms { margin-top: 0.8rem; display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; }
+
+  /* ─── ALERTS ─── */
+  .alert {
+    display: flex; align-items: flex-start; gap: 0.8rem;
+    padding: 1rem 1.2rem; border-radius: 8px; margin-bottom: 1rem;
+    font-size: 0.83rem;
+  }
+  .alert-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+  .alert-info { background: rgba(0,212,255,0.08); border: 1px solid rgba(0,212,255,0.2); }
+  .alert-warn { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); color: var(--warn); }
+  .alert-danger { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); color: var(--danger); }
+  .alert-success { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); color: var(--accent3); }
+
+  /* ─── PROGRESS ─── */
+  .progress-bar { background: var(--border); border-radius: 4px; height: 6px; overflow: hidden; margin-top: 0.4rem; }
+  .progress-fill { height: 100%; border-radius: 4px; transition: width 1s ease; }
+
+  /* ─── BADGES ─── */
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-family: var(--mono); font-size: 0.65rem;
+    padding: 0.2rem 0.55rem; border-radius: 20px;
+  }
+  .badge-blue { background: rgba(0,212,255,0.12); color: var(--accent); border: 1px solid rgba(0,212,255,0.3); }
+  .badge-purple { background: rgba(124,58,237,0.12); color: var(--accent2); border: 1px solid rgba(124,58,237,0.3); }
+  .badge-green { background: rgba(16,185,129,0.12); color: var(--accent3); border: 1px solid rgba(16,185,129,0.3); }
+  .badge-warn { background: rgba(245,158,11,0.12); color: var(--warn); border: 1px solid rgba(245,158,11,0.3); }
+
+  /* ─── CHECKLIST ─── */
+  .checklist { list-style: none; }
+  .checklist li {
+    display: flex; align-items: flex-start; gap: 0.75rem;
+    padding: 0.6rem 0; border-bottom: 1px solid rgba(30,58,95,0.3);
+    font-size: 0.84rem;
+  }
+  .checklist li:last-child { border-bottom: none; }
+  .check-icon { flex-shrink: 0; margin-top: 1px; }
+
+  /* ─── SVG BRANCH CHART ─── */
+  .branch-svg-wrap {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 10px; padding: 1rem; overflow-x: auto;
+  }
+  svg.branch-chart text { font-family: 'Space Mono', monospace; }
+
+  /* ─── TABS ─── */
+  .tabs { display: flex; gap: 2px; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
+  .tab-btn {
+    font-family: var(--mono); font-size: 0.75rem; padding: 0.6rem 1.2rem;
+    background: transparent; border: none; color: var(--text-muted);
+    cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s;
+    margin-bottom: -1px;
+  }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-btn:hover { color: var(--text); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+
+  /* ─── MODAL ─── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; z-index: 2000;
+    background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 2rem; max-width: 500px; width: 90%;
+    animation: slideUp 0.3s ease;
+  }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+  .modal-close { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.2rem; }
+  .modal-close:hover { color: var(--text); }
+
+  /* ─── FOOTER ─── */
+  footer {
+    margin-left: 220px; padding: 1.5rem 2rem;
+    border-top: 1px solid var(--border);
+    font-family: var(--mono); font-size: 0.7rem;
+    color: var(--text-muted); display: flex; justify-content: space-between;
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+
+  /* ─── TOAST ─── */
+  .toast {
+    position: fixed; bottom: 2rem; right: 2rem; z-index: 3000;
+    background: var(--surface2); border: 1px solid var(--accent3);
+    border-radius: 8px; padding: 0.8rem 1.2rem;
+    font-family: var(--mono); font-size: 0.78rem; color: var(--accent3);
+    transform: translateY(100px); opacity: 0;
+    transition: all 0.3s; display: flex; align-items: center; gap: 8px;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  /* ─── UTILITIES ─── */
+  .flex { display: flex; }
+  .gap-1 { gap: 0.5rem; }
+  .gap-2 { gap: 1rem; }
+  .items-center { align-items: center; }
+  .justify-between { justify-content: space-between; }
+  .mb-1 { margin-bottom: 0.5rem; }
+  .mb-2 { margin-bottom: 1rem; }
+  .mb-3 { margin-bottom: 1.5rem; }
+  .text-muted { color: var(--text-muted); font-size: 0.82rem; }
+  .text-mono { font-family: var(--mono); }
+  .text-accent { color: var(--accent); }
+  .text-green { color: var(--accent3); }
+  .text-warn { color: var(--warn); }
+  .text-danger { color: var(--danger); }
+  .hidden { display: none; }
+  .loading-spin { animation: spin 1s linear infinite; display: inline-block; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     LOGIN PAGE
+════════════════════════════════════════════ -->
+<div id="loginPage" class="page active">
+  <div class="login-grid"></div>
+  <div class="login-container">
+    <div class="login-header">
+      <div class="login-logo">git<span>Flow</span></div>
+      <div class="login-subtitle">// agile team social contract platform</div>
+    </div>
+    <div style="text-align:center;margin-bottom:1.5rem">
+      <div class="login-badge">SECURE TEAM PORTAL</div>
+    </div>
+    <div class="error-msg" id="errorMsg">⚠ Invalid credentials. Try admin / agile2024</div>
+    <div class="form-group">
+      <label class="form-label">Username</label>
+      <input type="text" class="form-input" id="username" placeholder="your-username" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input type="password" class="form-input" id="password" placeholder="••••••••" />
+    </div>
+    <div class="login-hint">
+      Demo credentials: <span>admin</span> / <span>agile2024</span>
+    </div>
+    <button class="btn-primary" onclick="doLogin()">
+      <span id="loginBtnText">→ SIGN IN</span>
+    </button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     APP SHELL (shown after login)
+════════════════════════════════════════════ -->
+<div id="appShell" class="hidden">
+  <!-- NAV -->
+  <nav>
+    <div class="nav-logo" onclick="navigate('home')">gitFlow</div>
+    <div class="nav-links">
+      <button class="nav-btn active" id="navHome" onclick="navigate('home')">HOME</button>
+      <button class="nav-btn" id="navStrategy" onclick="navigate('strategy')">STRATEGY</button>
+      <button class="nav-btn" id="navWorkflow" onclick="navigate('workflow')">WORKFLOW</button>
+      <button class="nav-btn" id="navTeam" onclick="navigate('team')">TEAM</button>
+      <button class="nav-btn" id="navContract" onclick="navigate('contract')">CONTRACT</button>
+    </div>
+    <div class="nav-user">
+      <div class="avatar" id="navAvatar">A</div>
+      <span id="navUsername">admin</span>
+      <button class="logout-btn" onclick="doLogout()">LOGOUT</button>
+    </div>
+  </nav>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Overview</div>
+      <div class="sidebar-item active" id="sb-home" onclick="navigate('home')"><span class="sidebar-icon">⌂</span>Dashboard</div>
+      <div class="sidebar-item" id="sb-strategy" onclick="navigate('strategy')"><span class="sidebar-icon">⎇</span>Branch Strategy</div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Process</div>
+      <div class="sidebar-item" id="sb-workflow" onclick="navigate('workflow')"><span class="sidebar-icon">⟳</span>Workflow</div>
+      <div class="sidebar-item" id="sb-team" onclick="navigate('team')"><span class="sidebar-icon">◎</span>Team Roles</div>
+      <div class="sidebar-item" id="sb-contract" onclick="navigate('contract')"><span class="sidebar-icon">✦</span>Social Contract</div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Quick Links</div>
+      <div class="sidebar-item" onclick="openModal('pr')"><span class="sidebar-icon">↗</span>PR Checklist</div>
+      <div class="sidebar-item" onclick="openModal('commit')"><span class="sidebar-icon">#</span>Commit Format</div>
+    </div>
+  </div>
+
+  <!-- PAGES -->
+  <div class="main-layout">
+    <div class="main-content">
+
+      <!-- ─── HOME PAGE ─── -->
+      <div id="homePage" class="page active">
+        <div class="page-header">
+          <div class="breadcrumb">gitFlow / <span>Dashboard</span></div>
+          <h1>🚀 Team Dashboard</h1>
+          <p>Agile Git Branching Strategy — Social Contract Overview</p>
+        </div>
+
+        <div class="grid-4 mb-3">
+          <div class="stat-box">
+            <div class="stat-label">Active Branches</div>
+            <div class="stat-val">12</div>
+            <div class="stat-sub">↑ 3 this sprint</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Open PRs</div>
+            <div class="stat-val" style="color:var(--accent2)">7</div>
+            <div class="stat-sub">2 await review</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Deployments</div>
+            <div class="stat-val" style="color:var(--accent3)">24</div>
+            <div class="stat-sub">this month</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Contract Score</div>
+            <div class="stat-val" style="color:var(--warn)">94%</div>
+            <div class="stat-sub">compliance</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title"><span class="icon">⎇</span> Branch Overview</div>
+            <div class="branch-svg-wrap">
+              <svg class="branch-chart" viewBox="0 0 540 220" width="100%" xmlns="http://www.w3.org/2000/svg">
+                <!-- main line -->
+                <line x1="40" y1="30" x2="500" y2="30" stroke="#00d4ff" stroke-width="2"/>
+                <!-- develop line -->
+                <line x1="80" y1="30" x2="80" y2="80" stroke="#7c3aed" stroke-width="1.5" stroke-dasharray="4"/>
+                <line x1="80" y1="80" x2="460" y2="80" stroke="#7c3aed" stroke-width="2"/>
+                <line x1="460" y1="80" x2="460" y2="30" stroke="#7c3aed" stroke-width="1.5" stroke-dasharray="4"/>
+                <!-- feature lines -->
+                <line x1="140" y1="80" x2="140" y2="140" stroke="#10b981" stroke-width="1.5" stroke-dasharray="4"/>
+                <line x1="140" y1="140" x2="300" y2="140" stroke="#10b981" stroke-width="2"/>
+                <line x1="300" y1="140" x2="300" y2="80" stroke="#10b981" stroke-width="1.5" stroke-dasharray="4"/>
+                <!-- hotfix -->
+                <line x1="200" y1="30" x2="200" y2="180" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4"/>
+                <line x1="200" y1="180" x2="260" y2="180" stroke="#ef4444" stroke-width="2"/>
+                <line x1="260" y1="180" x2="260" y2="30" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4"/>
+                <!-- release -->
+                <line x1="360" y1="80" x2="360" y2="110" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4"/>
+                <line x1="360" y1="110" x2="420" y2="110" stroke="#f59e0b" stroke-width="2"/>
+                <line x1="420" y1="110" x2="420" y2="30" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4"/>
+
+                <!-- main commits -->
+                <circle cx="40" cy="30" r="6" fill="#00d4ff"/>
+                <circle cx="200" cy="30" r="5" fill="#00d4ff"/>
+                <circle cx="260" cy="30" r="5" fill="#00d4ff"/>
+                <circle cx="420" cy="30" r="5" fill="#00d4ff"/>
+                <circle cx="460" cy="30" r="5" fill="#00d4ff"/>
+                <circle cx="500" cy="30" r="6" fill="#00d4ff" stroke="#fff" stroke-width="2"/>
+
+                <!-- develop commits -->
+                <circle cx="80" cy="80" r="5" fill="#7c3aed"/>
+                <circle cx="160" cy="80" r="5" fill="#7c3aed"/>
+                <circle cx="300" cy="80" r="5" fill="#7c3aed"/>
+                <circle cx="460" cy="80" r="5" fill="#7c3aed"/>
+
+                <!-- feature commits -->
+                <circle cx="140" cy="140" r="5" fill="none" stroke="#10b981" stroke-width="2"/>
+                <circle cx="200" cy="140" r="5" fill="none" stroke="#10b981" stroke-width="2"/>
+                <circle cx="300" cy="140" r="5" fill="#10b981"/>
+
+                <!-- hotfix commits -->
+                <circle cx="200" cy="180" r="5" fill="none" stroke="#ef4444" stroke-width="2"/>
+                <circle cx="260" cy="180" r="5" fill="#ef4444"/>
+
+                <!-- release commits -->
+                <circle cx="360" cy="110" r="5" fill="none" stroke="#f59e0b" stroke-width="2"/>
+                <circle cx="420" cy="110" r="5" fill="#f59e0b"/>
+
+                <!-- labels -->
+                <text x="8" y="18" font-size="9" fill="#00d4ff">main</text>
+                <text x="8" y="84" font-size="9" fill="#7c3aed">develop</text>
+                <text x="4" y="145" font-size="9" fill="#10b981">feature</text>
+                <text x="4" y="185" font-size="9" fill="#ef4444">hotfix</text>
+                <text x="345" y="108" font-size="9" fill="#f59e0b">release</text>
+              </svg>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title"><span class="icon">📋</span> Sprint Status</div>
+            <div class="timeline">
+              <div class="timeline-item done">
+                <div class="timeline-dot"></div>
+                <div class="timeline-title">Sprint Planning</div>
+                <div class="timeline-desc">Branches created from develop, tasks assigned</div>
+                <div class="timeline-time">✓ Completed — May 1</div>
+              </div>
+              <div class="timeline-item done">
+                <div class="timeline-dot"></div>
+                <div class="timeline-title">Feature Development</div>
+                <div class="timeline-desc">feature/* branches in active development</div>
+                <div class="timeline-time">✓ Completed — May 3</div>
+              </div>
+              <div class="timeline-item active">
+                <div class="timeline-dot"></div>
+                <div class="timeline-title">Code Review & PRs</div>
+                <div class="timeline-desc">7 open pull requests under review</div>
+                <div class="timeline-time">⟳ In Progress — Now</div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-title">Release Candidate</div>
+                <div class="timeline-desc">Merge to release/1.4.0 for QA</div>
+                <div class="timeline-time">→ Scheduled — May 8</div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-title">Production Deploy</div>
+                <div class="timeline-desc">Tag v1.4.0 on main, hotfix window open</div>
+                <div class="timeline-time">→ Scheduled — May 10</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><span class="icon">⚡</span> Quick Contract Rules</div>
+          <div class="grid-3">
+            <div class="alert alert-info"><span class="alert-icon">⎇</span><div><strong>Branch Naming</strong><br><span style="font-family:var(--mono);font-size:0.75rem">feature/JIRA-123-short-desc</span></div></div>
+            <div class="alert alert-warn"><span class="alert-icon">🔒</span><div><strong>Protected Branches</strong><br>main & develop — no direct push</div></div>
+            <div class="alert alert-success"><span class="alert-icon">✓</span><div><strong>PR Requirement</strong><br>Min. 2 reviewers before merge</div></div>
+            <div class="alert alert-info"><span class="alert-icon">#</span><div><strong>Commit Format</strong><br><span style="font-family:var(--mono);font-size:0.75rem">type(scope): message</span></div></div>
+            <div class="alert alert-danger"><span class="alert-icon">⛔</span><div><strong>No Force Push</strong><br>Never on shared branches</div></div>
+            <div class="alert alert-success"><span class="alert-icon">🔄</span><div><strong>Sync Daily</strong><br>Rebase feature/* from develop</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── STRATEGY PAGE ─── -->
+      <div id="strategyPage" class="page">
+        <div class="page-header">
+          <div class="breadcrumb">gitFlow / <span>Branch Strategy</span></div>
+          <h1>⎇ Git Branching Strategy</h1>
+          <p>The agreed team structure for all code changes — GitFlow model</p>
+        </div>
+
+        <div class="tabs">
+          <button class="tab-btn active" onclick="switchTab(this,'branches')">Branch Types</button>
+          <button class="tab-btn" onclick="switchTab(this,'naming')">Naming Conventions</button>
+          <button class="tab-btn" onclick="switchTab(this,'protection')">Branch Protection</button>
+          <button class="tab-btn" onclick="switchTab(this,'commands')">Git Commands</button>
+        </div>
+
+        <div class="tab-content active" id="tab-branches">
+          <table class="rules-table">
+            <thead>
+              <tr>
+                <th>Branch</th>
+                <th>Purpose</th>
+                <th>Source From</th>
+                <th>Merge Into</th>
+                <th>Direct Push</th>
+                <th>Lifetime</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="tag tag-main">main</span></td>
+                <td>Production-ready code only</td>
+                <td>—</td>
+                <td>—</td>
+                <td><span class="tag tag-no">NEVER</span></td>
+                <td>Permanent</td>
+              </tr>
+              <tr>
+                <td><span class="tag tag-dev">develop</span></td>
+                <td>Integration branch for all features</td>
+                <td>main</td>
+                <td>main (via release)</td>
+                <td><span class="tag tag-no">NEVER</span></td>
+                <td>Permanent</td>
+              </tr>
+              <tr>
+                <td><span class="tag tag-feat">feature/*</span></td>
+                <td>Individual feature / user story</td>
+                <td>develop</td>
+                <td>develop</td>
+                <td><span class="tag tag-yes">YES</span></td>
+                <td>Sprint duration</td>
+              </tr>
+              <tr>
+                <td><span class="tag tag-rel">release/*</span></td>
+                <td>Release stabilization & bugfixes</td>
+                <td>develop</td>
+                <td>main + develop</td>
+                <td><span class="tag tag-no">NEVER</span></td>
+                <td>Until deploy</td>
+              </tr>
+              <tr>
+                <td><span class="tag tag-hot">hotfix/*</span></td>
+                <td>Critical production fix</td>
+                <td>main</td>
+                <td>main + develop</td>
+                <td><span class="tag tag-yes">YES</span></td>
+                <td>Until merged</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="tab-content" id="tab-naming">
+          <div class="grid-2">
+            <div>
+              <div class="card">
+                <div class="card-title">✅ Correct Naming</div>
+                <div class="code-block">
+<span class="comment"># Feature branches</span>
+<span class="cmd">feature</span>/<span class="arg">PROJ-123-user-auth-login</span>
+<span class="cmd">feature</span>/<span class="arg">PROJ-456-payment-integration</span>
+<span class="cmd">feature</span>/<span class="arg">PROJ-789-dark-mode-ui</span>
+
+<span class="comment"># Bugfix branches</span>
+<span class="cmd">bugfix</span>/<span class="arg">PROJ-321-fix-null-pointer</span>
+
+<span class="comment"># Release branches</span>
+<span class="cmd">release</span>/<span class="arg">1.4.0</span>
+<span class="cmd">release</span>/<span class="arg">2.0.0-beta</span>
+
+<span class="comment"># Hotfix branches</span>
+<span class="cmd">hotfix</span>/<span class="arg">PROJ-999-critical-auth-bypass</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div class="card">
+                <div class="card-title">❌ Incorrect Naming</div>
+                <div class="code-block">
+<span class="comment"># ❌ No ticket reference</span>
+<span class="arg">feature/my-feature</span>
+
+<span class="comment"># ❌ PascalCase / spaces</span>
+<span class="arg">Feature/UserAuth</span>
+<span class="arg">feature/user auth</span>
+
+<span class="comment"># ❌ Too vague</span>
+<span class="arg">feature/fix</span>
+<span class="arg">feature/updates</span>
+
+<span class="comment"># ❌ Direct on protected</span>
+<span class="arg">main</span> <span style="color:var(--danger)">← push blocked</span>
+<span class="arg">develop</span> <span style="color:var(--danger)">← push blocked</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card mt-2">
+            <div class="card-title">📐 Naming Pattern</div>
+            <div class="code-block">
+<span class="kw">pattern:</span>  <span class="cmd">&lt;type&gt;</span>/<span class="arg">&lt;TICKET-ID&gt;</span>-<span class="str">&lt;short-kebab-description&gt;</span>
+
+<span class="kw">types:</span>    feature | bugfix | hotfix | release | chore | refactor
+<span class="kw">ticket:</span>   JIRA/Linear ticket reference (mandatory)
+<span class="kw">desc:</span>     lowercase, hyphen-separated, max 5 words
+<span class="kw">example:</span>  feature/PROJ-101-add-oauth-google
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-content" id="tab-protection">
+          <div class="card">
+            <div class="card-title">🛡 Branch Protection Rules</div>
+            <div class="alert alert-warn mb-2"><span class="alert-icon">⚠</span>These rules are enforced at the repository level via GitHub/GitLab branch protection settings.</div>
+            <table class="rules-table">
+              <thead>
+                <tr><th>Rule</th><th>main</th><th>develop</th><th>feature/*</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Require pull request</td><td><span class="tag tag-yes">YES</span></td><td><span class="tag tag-yes">YES</span></td><td><span class="tag tag-no">NO</span></td></tr>
+                <tr><td>Min. reviewers</td><td>2</td><td>2</td><td>0</td></tr>
+                <tr><td>Require CI to pass</td><td><span class="tag tag-yes">YES</span></td><td><span class="tag tag-yes">YES</span></td><td><span class="tag tag-yes">YES</span></td></tr>
+                <tr><td>Allow force push</td><td><span class="tag tag-no">NO</span></td><td><span class="tag tag-no">NO</span></td><td><span class="tag tag-yes">YES</span></td></tr>
+                <tr><td>Allow deletions</td><td><span class="tag tag-no">NO</span></td><td><span class="tag tag-no">NO</span></td><td><span class="tag tag-yes">YES</span></td></tr>
+                <tr><td>Require signed commits</td><td><span class="tag tag-yes">YES</span></td><td><span class="tag tag-yes">YES</span></td><td>Recommended</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="tab-content" id="tab-commands">
+          <div class="card">
+            <div class="card-title">💻 Essential Git Commands</div>
+            <div class="code-block" style="margin-bottom:1rem">
+              <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+<span class="comment"># ── Start a new feature ──────────────────────</span>
+<span class="cmd">git</span> checkout develop
+<span class="cmd">git</span> pull origin develop
+<span class="cmd">git</span> checkout -b <span class="arg">feature/PROJ-123-my-feature</span>
+
+<span class="comment"># ── Daily sync with develop ──────────────────</span>
+<span class="cmd">git</span> fetch origin
+<span class="cmd">git</span> rebase <span class="str">origin/develop</span>
+
+<span class="comment"># ── Conventional commit ──────────────────────</span>
+<span class="cmd">git</span> commit -m <span class="str">"feat(auth): add Google OAuth login"</span>
+
+<span class="comment"># ── Push & open PR ───────────────────────────</span>
+<span class="cmd">git</span> push origin <span class="arg">feature/PROJ-123-my-feature</span>
+<span class="comment"># → Open PR in GitHub/GitLab → target: develop</span>
+
+<span class="comment"># ── Create release branch ────────────────────</span>
+<span class="cmd">git</span> checkout develop
+<span class="cmd">git</span> checkout -b <span class="arg">release/1.4.0</span>
+
+<span class="comment"># ── Hotfix from production ───────────────────</span>
+<span class="cmd">git</span> checkout main
+<span class="cmd">git</span> checkout -b <span class="arg">hotfix/PROJ-999-critical-fix</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── WORKFLOW PAGE ─── -->
+      <div id="workflowPage" class="page">
+        <div class="page-header">
+          <div class="breadcrumb">gitFlow / <span>Workflow</span></div>
+          <h1>⟳ End-to-End Workflow</h1>
+          <p>From user story to production — the complete agile journey</p>
+        </div>
+
+        <div class="card mb-2">
+          <div class="card-title">📦 Commit Message Convention</div>
+          <div class="code-block" style="margin-bottom:1rem">
+<span class="comment"># Format: &lt;type&gt;(&lt;scope&gt;): &lt;description&gt;</span>
+<span class="comment">#</span>
+<span class="comment"># Types:</span>
+<span class="cmd">feat</span>     <span class="comment">— new feature</span>
+<span class="cmd">fix</span>      <span class="comment">— bug fix</span>
+<span class="cmd">docs</span>     <span class="comment">— documentation only</span>
+<span class="cmd">style</span>    <span class="comment">— formatting, no logic change</span>
+<span class="cmd">refactor</span> <span class="comment">— code restructure</span>
+<span class="cmd">test</span>     <span class="comment">— add or update tests</span>
+<span class="cmd">chore</span>    <span class="comment">— build, deps, tooling</span>
+<span class="cmd">ci</span>       <span class="comment">— CI/CD configuration</span>
+
+<span class="comment"># Examples:</span>
+<span class="str">"feat(auth): add JWT refresh token rotation"</span>
+<span class="str">"fix(cart): resolve race condition on checkout"</span>
+<span class="str">"docs(readme): update env setup instructions"</span>
+<span class="str">"chore(deps): bump lodash to 4.17.21"</span>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">📝 Pull Request Checklist</div>
+            <ul class="checklist">
+              <li><span class="check-icon text-green">✓</span><span>Branch named per convention (type/TICKET-desc)</span></li>
+              <li><span class="check-icon text-green">✓</span><span>All commits follow conventional format</span></li>
+              <li><span class="check-icon text-green">✓</span><span>Unit tests written and passing locally</span></li>
+              <li><span class="check-icon text-green">✓</span><span>CI/CD pipeline passing (green checks)</span></li>
+              <li><span class="check-icon text-green">✓</span><span>No merge conflicts with target branch</span></li>
+              <li><span class="check-icon text-green">✓</span><span>PR description filled with context + ticket link</span></li>
+              <li><span class="check-icon text-green">✓</span><span>At least 2 reviewers assigned</span></li>
+              <li><span class="check-icon text-green">✓</span><span>Screenshot/video for UI changes</span></li>
+              <li><span class="check-icon text-warn">→</span><span>Self-review done before requesting review</span></li>
+            </ul>
+          </div>
+
+          <div class="card">
+            <div class="card-title">📐 Sprint Workflow Phases</div>
+            <div class="timeline">
+              <div class="timeline-item done">
+                <div class="timeline-dot"></div>
+                <div class="timeline-title">1. Ticket Created</div>
+                <div class="timeline-desc">User story in backlog → sprint planned, branch name determined</div>
+              </div>
+              <div class="timeline-item done">
+                <div class="timeline-dot"></div>
+                <div class="timeline-title">2. Branch Created</div>
+                <div class="timeline-desc">feature/PROJ-ID-desc from develop HEAD</div>
+              </div>
+              <div class="timeline-item done">
+                <div class="timeline-dot"></div>
+                <div class="timeline-title">3. Development + Daily Sync</div>
+                <div class="timeline-desc">Code, commit (conventional), rebase daily</div>
+              </div>
+              <div class="timeline-item active">
+                <div class="timeline-dot"></div>
+                <div class="timeline-title">4. PR Opened → Review</div>
+                <div class="timeline-desc">2 approvals, CI green → merge to develop</div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-title">5. Release Cut</div>
+                <div class="timeline-desc">release/X.Y.Z from develop → QA testing</div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-title">6. Production Deploy</div>
+                <div class="timeline-desc">Merge release → main, tag vX.Y.Z</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🚨 Hotfix Emergency Procedure</div>
+          <div class="alert alert-danger mb-2"><span class="alert-icon">🚨</span>Only for P0 production incidents. Requires on-call lead approval.</div>
+          <div class="code-block">
+<span class="comment"># 1. Branch from main (NOT develop!)</span>
+<span class="cmd">git</span> checkout main && git pull
+<span class="cmd">git</span> checkout -b <span class="arg">hotfix/PROJ-999-description</span>
+
+<span class="comment"># 2. Fix, test, commit</span>
+<span class="cmd">git</span> commit -m <span class="str">"fix(critical): resolve auth bypass vulnerability"</span>
+
+<span class="comment"># 3. PR → main (expedited: 1 reviewer OK)</span>
+<span class="comment"># 4. After merge to main, also merge to develop</span>
+<span class="cmd">git</span> checkout develop
+<span class="cmd">git</span> merge --no-ff <span class="arg">hotfix/PROJ-999-description</span>
+
+<span class="comment"># 5. Tag the fix on main</span>
+<span class="cmd">git</span> tag -a <span class="arg">v1.3.1</span> -m <span class="str">"Hotfix: auth bypass patch"</span>
+<span class="cmd">git</span> push origin <span class="arg">v1.3.1</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── TEAM PAGE ─── -->
+      <div id="teamPage" class="page">
+        <div class="page-header">
+          <div class="breadcrumb">gitFlow / <span>Team Roles</span></div>
+          <h1>◎ Team Roles & Permissions</h1>
+          <p>Who can do what — our agile team's git governance model</p>
+        </div>
+
+        <div class="grid-4 mb-3">
+          <div class="team-card">
+            <div class="team-avatar" style="background:linear-gradient(135deg,#7c3aed,#00d4ff)">TL</div>
+            <div class="team-name">Tech Lead</div>
+            <div class="team-role">// lead-engineer</div>
+            <div class="team-perms">
+              <span class="badge badge-blue">merge→main</span>
+              <span class="badge badge-purple">release cut</span>
+              <span class="badge badge-green">tag release</span>
+              <span class="badge badge-warn">hotfix</span>
+            </div>
+          </div>
+          <div class="team-card">
+            <div class="team-avatar" style="background:linear-gradient(135deg,#10b981,#7c3aed)">SE</div>
+            <div class="team-name">Senior Dev</div>
+            <div class="team-role">// senior-engineer</div>
+            <div class="team-perms">
+              <span class="badge badge-blue">merge→develop</span>
+              <span class="badge badge-purple">review PRs</span>
+              <span class="badge badge-green">feature branch</span>
+            </div>
+          </div>
+          <div class="team-card">
+            <div class="team-avatar" style="background:linear-gradient(135deg,#f59e0b,#10b981)">DE</div>
+            <div class="team-name">Developer</div>
+            <div class="team-role">// engineer</div>
+            <div class="team-perms">
+              <span class="badge badge-green">feature branch</span>
+              <span class="badge badge-purple">open PR</span>
+              <span class="badge badge-blue">review PRs</span>
+            </div>
+          </div>
+          <div class="team-card">
+            <div class="team-avatar" style="background:linear-gradient(135deg,#ef4444,#f59e0b)">QA</div>
+            <div class="team-name">QA Engineer</div>
+            <div class="team-role">// qa-tester</div>
+            <div class="team-perms">
+              <span class="badge badge-green">read access</span>
+              <span class="badge badge-warn">approve PRs</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">📊 Permission Matrix</div>
+          <table class="rules-table">
+            <thead>
+              <tr>
+                <th>Action</th>
+                <th>Tech Lead</th>
+                <th>Senior Dev</th>
+                <th>Developer</th>
+                <th>QA</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Push to main</td><td><span class="tag tag-no">NEVER</span></td><td><span class="tag tag-no">NEVER</span></td><td><span class="tag tag-no">NEVER</span></td><td><span class="tag tag-no">NEVER</span></td></tr>
+              <tr><td>Merge PR → main</td><td><span class="tag tag-yes">YES</span></td><td><span class="tag tag-no">NO</span></td><td><span class="tag tag-no">NO</span></td><td><span class="tag tag-no">NO</span></td></tr>
+              <tr><td>Merge PR → develop</td><td><span class="tag tag-yes">YES</span></td><td><span class="tag tag-yes">YES</span></td><td><span class="tag tag-no">NO</span></td><td><span class="tag tag-no">NO</span></td></tr>
+              <tr><td>Create feature branch</td><td><span class="tag tag-yes">YES</span></td><td><span class="tag tag-yes">YES</span></td><td><span class="tag tag-yes">YES</span></td><td><span class="tag tag-no">NO</span></td></tr>
+              <tr><td>Create release branch</td><td><span class="tag tag-yes">YES</span></td><td><span class="tag tag-no">NO</span></td><td><span class="tag tag-no">NO</span></td><td><span class="tag tag-no">NO</span></td></tr>
+              <tr><td>Create hotfix branch</td><td><span class="tag tag-yes">YES</span></td><td><span class="tag tag-yes">YES</span></td><td><span class="tag tag-no">NO</span></td><td><span class="tag tag-no">NO</span></td></tr>
+              <tr><td>Approve PR</td><td><span class="tag tag-yes">YES</span></td><td><span class="tag tag-yes">YES</span></td><td><span class="tag tag-yes">YES</span></td><td><span class="tag tag-yes">YES</span></td></tr>
+              <tr><td>Tag release version</td><td><span class="tag tag-yes">YES</span></td><td><span class="tag tag-no">NO</span></td><td><span class="tag tag-no">NO</span></td><td><span class="tag tag-no">NO</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ─── CONTRACT PAGE ─── -->
+      <div id="contractPage" class="page">
+        <div class="page-header">
+          <div class="breadcrumb">gitFlow / <span>Social Contract</span></div>
+          <h1>✦ The Social Contract</h1>
+          <p>Our shared commitments as an agile engineering team</p>
+        </div>
+
+        <div class="alert alert-success mb-3">
+          <span class="alert-icon">✦</span>
+          <div><strong>This document is our living agreement.</strong> All team members have reviewed, discussed, and committed to these principles. Updated in retrospectives.</div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">🤝 Our Core Commitments</div>
+            <ul class="checklist">
+              <li><span class="check-icon text-green">1</span><span><strong>We protect main.</strong> main is sacred — it is always deployable. No exceptions.</span></li>
+              <li><span class="check-icon text-green">2</span><span><strong>We use PRs for everything.</strong> No direct pushes to shared branches. Every change has a review trail.</span></li>
+              <li><span class="check-icon text-green">3</span><span><strong>We write meaningful commits.</strong> Conventional commits are mandatory. No "WIP", "fix", "asdf".</span></li>
+              <li><span class="check-icon text-green">4</span><span><strong>We review within 24 hours.</strong> PRs should not block team momentum. We prioritize review.</span></li>
+              <li><span class="check-icon text-green">5</span><span><strong>We sync daily.</strong> Rebase feature branches on develop every morning to minimize conflicts.</span></li>
+              <li><span class="check-icon text-green">6</span><span><strong>We delete merged branches.</strong> Clean repo hygiene. Feature branches die after merge.</span></li>
+              <li><span class="check-icon text-green">7</span><span><strong>We never force push shared branches.</strong> Force push is allowed only on your own unreviewed feature branch.</span></li>
+              <li><span class="check-icon text-green">8</span><span><strong>We escalate blockers.</strong> Stuck > 2 hours? Raise it in standup. We unblock each other.</span></li>
+            </ul>
+          </div>
+
+          <div class="card">
+            <div class="card-title">⚖️ Consequences & Handling</div>
+            <div class="mb-2">
+              <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.8rem">When a contract rule is violated, we follow a blameless, learning-first approach:</div>
+              <div class="alert alert-success"><span class="alert-icon">1st</span><div><strong>Discussion</strong> — Async message, understand what happened</div></div>
+              <div class="alert alert-warn"><span class="alert-icon">2nd</span><div><strong>Retro Item</strong> — Discuss in sprint retrospective, add to learnings</div></div>
+              <div class="alert alert-danger"><span class="alert-icon">3rd</span><div><strong>Process Review</strong> — Update tooling/automation to prevent recurrence</div></div>
+            </div>
+            <div class="card-title" style="margin-top:1.5rem">📈 Compliance Tracking</div>
+            <div style="font-size:0.82rem">
+              <div class="flex justify-between items-center mb-1"><span>Commit convention</span><span class="text-green text-mono">97%</span></div>
+              <div class="progress-bar mb-2"><div class="progress-fill" style="width:97%;background:var(--accent3)"></div></div>
+              <div class="flex justify-between items-center mb-1"><span>PR review time</span><span class="text-warn text-mono">81%</span></div>
+              <div class="progress-bar mb-2"><div class="progress-fill" style="width:81%;background:var(--warn)"></div></div>
+              <div class="flex justify-between items-center mb-1"><span>Daily sync (rebase)</span><span class="text-green text-mono">89%</span></div>
+              <div class="progress-bar mb-2"><div class="progress-fill" style="width:89%;background:var(--accent3)"></div></div>
+              <div class="flex justify-between items-center mb-1"><span>Branch naming</span><span class="text-accent text-mono">94%</span></div>
+              <div class="progress-bar"><div class="progress-fill" style="width:94%;background:var(--accent)"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🔄 Retro & Improvement Cycle</div>
+          <div class="grid-3">
+            <div style="text-align:center;padding:1rem">
+              <div style="font-size:2rem;margin-bottom:0.5rem">💬</div>
+              <div style="font-weight:700;margin-bottom:0.3rem">Retrospective</div>
+              <div class="text-muted">Every sprint end — What worked? What didn't? Update the contract.</div>
+            </div>
+            <div style="text-align:center;padding:1rem">
+              <div style="font-size:2rem;margin-bottom:0.5rem">⚙️</div>
+              <div style="font-weight:700;margin-bottom:0.3rem">Automate</div>
+              <div class="text-muted">Enforce via git hooks, CI rules, linters — humans shouldn't police what tools can.</div>
+            </div>
+            <div style="text-align:center;padding:1rem">
+              <div style="font-size:2rem;margin-bottom:0.5rem">📖</div>
+              <div style="font-weight:700;margin-bottom:0.3rem">Document</div>
+              <div class="text-muted">All decisions documented here. New team members onboard with full context.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">✍️ Team Signatories</div>
+          <div class="grid-4">
+            <div style="text-align:center">
+              <div class="avatar" style="width:40px;height:40px;font-size:0.9rem;margin:0 auto 0.5rem;background:linear-gradient(135deg,#7c3aed,#00d4ff)">TL</div>
+              <div style="font-family:var(--mono);font-size:0.72rem">Tech Lead</div>
+              <div class="badge badge-green" style="margin-top:4px">✓ Signed</div>
+            </div>
+            <div style="text-align:center">
+              <div class="avatar" style="width:40px;height:40px;font-size:0.9rem;margin:0 auto 0.5rem;background:linear-gradient(135deg,#10b981,#7c3aed)">S1</div>
+              <div style="font-family:var(--mono);font-size:0.72rem">Senior Dev 1</div>
+              <div class="badge badge-green" style="margin-top:4px">✓ Signed</div>
+            </div>
+            <div style="text-align:center">
+              <div class="avatar" style="width:40px;height:40px;font-size:0.9rem;margin:0 auto 0.5rem;background:linear-gradient(135deg,#f59e0b,#10b981)">D1</div>
+              <div style="font-family:var(--mono);font-size:0.72rem">Developer 1</div>
+              <div class="badge badge-green" style="margin-top:4px">✓ Signed</div>
+            </div>
+            <div style="text-align:center">
+              <div class="avatar" style="width:40px;height:40px;font-size:0.9rem;margin:0 auto 0.5rem;background:linear-gradient(135deg,#ef4444,#f59e0b)">QA</div>
+              <div style="font-family:var(--mono);font-size:0.72rem">QA Engineer</div>
+              <div class="badge badge-green" style="margin-top:4px">✓ Signed</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- main-content -->
+  </div><!-- main-layout -->
+
+  <footer>
+    <span>© 2024 gitFlow Social Contract — Agile Team Git Strategy Platform</span>
+    <span>v1.4.0 · <a href="#">docs</a> · <a href="#">changelog</a> · Built with ❤️ by the team</span>
+  </footer>
+</div><!-- appShell -->
+
+<!-- ─── MODALS ─── -->
+<div class="modal-overlay" id="prModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="card-title">↗ PR Quick Checklist</div>
+      <button class="modal-close" onclick="closeModal('pr')">✕</button>
+    </div>
+    <ul class="checklist">
+      <li><span class="check-icon text-green">✓</span>Branch name follows convention</li>
+      <li><span class="check-icon text-green">✓</span>Commits are conventional</li>
+      <li><span class="check-icon text-green">✓</span>CI is green</li>
+      <li><span class="check-icon text-green">✓</span>No conflicts with target</li>
+      <li><span class="check-icon text-green">✓</span>PR description complete</li>
+      <li><span class="check-icon text-green">✓</span>2 reviewers assigned</li>
+      <li><span class="check-icon text-green">✓</span>Self-reviewed diff</li>
+    </ul>
+  </div>
+</div>
+
+<div class="modal-overlay" id="commitModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="card-title"># Commit Format Guide</div>
+      <button class="modal-close" onclick="closeModal('commit')">✕</button>
+    </div>
+    <div class="code-block">
+<span class="kw">type</span>(<span class="arg">scope</span>): <span class="str">short description</span>
+
+<span class="comment">↑ format (scope is optional)</span>
+
+<span class="cmd">feat</span>  <span class="comment">new feature</span>
+<span class="cmd">fix</span>   <span class="comment">bug fix</span>
+<span class="cmd">docs</span>  <span class="comment">documentation</span>
+<span class="cmd">test</span>  <span class="comment">add/fix tests</span>
+<span class="cmd">ci</span>    <span class="comment">CI/CD changes</span>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">✓ Copied to clipboard!</div>
+
+<script>
+  // ─── AUTH ───
+  let currentUser = null;
+
+  function doLogin() {
+    const u = document.getElementById('username').value.trim();
+    const p = document.getElementById('password').value.trim();
+    const btn = document.getElementById('loginBtnText');
+    const err = document.getElementById('errorMsg');
+
+    btn.innerHTML = '<span class="loading-spin">⟳</span> SIGNING IN...';
+    err.classList.remove('show');
+
+    setTimeout(() => {
+      if (u === 'admin' && p === 'agile2024') {
+        currentUser = u;
+        document.getElementById('navUsername').textContent = u;
+        document.getElementById('navAvatar').textContent = u[0].toUpperCase();
+        document.getElementById('loginPage').style.display = 'none';
+        document.getElementById('appShell').classList.remove('hidden');
+        showToast('Welcome back, ' + u + '!');
+      } else {
+        err.classList.add('show');
+      }
+      btn.innerHTML = '→ SIGN IN';
+    }, 800);
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && document.getElementById('loginPage').style.display !== 'none') doLogin();
+  });
+
+  function doLogout() {
+    document.getElementById('appShell').classList.add('hidden');
+    document.getElementById('loginPage').style.display = 'flex';
+    document.getElementById('username').value = '';
+    document.getElementById('password').value = '';
+    currentUser = null;
+  }
+
+  // ─── NAVIGATION ───
+  const pages = { home:'homePage', strategy:'strategyPage', workflow:'workflowPage', team:'teamPage', contract:'contractPage' };
+  const navBtns = { home:'navHome', strategy:'navStrategy', workflow:'navWorkflow', team:'navTeam', contract:'navContract' };
+  const sidebarBtns = { home:'sb-home', strategy:'sb-strategy', workflow:'sb-workflow', team:'sb-team', contract:'sb-contract' };
+
+  function navigate(section) {
+    Object.values(pages).forEach(id => { document.getElementById(id).className = 'page'; });
+    document.getElementById(pages[section]).className = 'page active';
+
+    Object.values(navBtns).forEach(id => document.getElementById(id).classList.remove('active'));
+    if (navBtns[section]) document.getElementById(navBtns[section]).classList.add('active');
+
+    Object.values(sidebarBtns).forEach(id => document.getElementById(id).classList.remove('active'));
+    if (sidebarBtns[section]) document.getElementById(sidebarBtns[section]).classList.add('active');
+  }
+
+  // ─── TABS ───
+  function switchTab(btn, id) {
+    btn.parentElement.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+    document.getElementById('tab-' + id).classList.add('active');
+  }
+
+  // ─── MODALS ───
+  function openModal(name) {
+    document.getElementById(name + 'Modal').classList.add('open');
+  }
+  function closeModal(name) {
+    document.getElementById(name + 'Modal').classList.remove('open');
+  }
+  document.querySelectorAll('.modal-overlay').forEach(o => {
+    o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+  });
+
+  // ─── TOAST ───
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = '✓ ' + msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  // ─── COPY CODE ───
+  function copyCode(btn) {
+    const block = btn.parentElement;
+    const text = block.innerText.replace('COPY', '').trim();
+    navigator.clipboard.writeText(text).then(() => showToast('Copied to clipboard!'));
+    btn.textContent = '✓ DONE';
+    setTimeout(() => btn.textContent = 'COPY', 1500);
+  }
+</script>
+</body>
+</html>
